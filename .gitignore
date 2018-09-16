@@ -1,8 +1,7 @@
 /temp
 /test
 /build
-/data
 /.idea
 *.pyc
 dist/
-*.egg-info
+*.egg-infodata/*
