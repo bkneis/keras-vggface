@@ -7,3 +7,4 @@ dist/
 *.egg-infodata/*
 data/*
 image/*
+*.h5
