@@ -1,13 +1,15 @@
 import pickle
 import sys
 from argparse import ArgumentParser
-
+from sklearn.model_selection import train_test_split
 import numpy as np
 import keras
 import cv2
 from keras.models import load_model
-from keras.engine import  Model
+from keras.engine import Model
 from keras.layers import Flatten, Dense, Input
+from sklearn.utils.class_weight import compute_class_weight
+
 from keras_vggface.vggface import VGGFace
 
 from dataset import get_training_data
@@ -59,10 +61,22 @@ def main(args):
 
         # Create new model using VGGFace as input with new classification layers
         custom_vgg_model = Model(vgg_model.input, out)
-        custom_vgg_model.compile(optimizer='rmsprop', loss='mean_squared_error', metrics=['accuracy'])
+        custom_vgg_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+        # Create a callback to log to tensorboard
+        tb_call_back = keras.callbacks.TensorBoard(log_dir='./Graph', histogram_freq=0, write_graph=True, write_images=True)
+
+        # Create a stratified training test split
+        X_train, X_test, y_train, y_test = train_test_split(data, labels, stratify=labels, test_size=0.20)
+
+        # TODO create class weights
+        y_integers = np.argmax(labels, axis=1)
+        class_weights = compute_class_weight('balanced', np.unique(y_integers), y_integers)
+        d_class_weights = dict(enumerate(class_weights))
 
         # Train our model
-        custom_vgg_model.fit(data, labels, epochs=100, batch_size=32)
+        custom_vgg_model.fit(X_train, y_train, epochs=100, batch_size=8, validation_data=(X_test, y_test), callbacks=[tb_call_back])  # , class_weight=d_class_weights)
+        # custom_vgg_model.fit(data, labels, epochs=500, batch_size=8, validation_split=0.2, callbacks=[tb_call_back])
         custom_vgg_model.save('resnet50.h5')
 
     else:
@@ -81,4 +95,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    main(parse_arguments(sys.argv[-1:]))
+    main(parse_arguments(sys.argv[1:]))
