@@ -8,3 +8,4 @@ dist/
 data/*
 image/*
 *.h5
+keras_vggface/Graph/*
